@@ -30,6 +30,31 @@ class HBNBCommand(cmd.Cmd):
              'latitude': float, 'longitude': float
             }
 
+    @staticmethod
+    def convector(txt):
+        """
+        Converts the given str into int, float or string
+
+        Args:
+           txt (str): string to be converted
+
+        Return:
+            The appropraite type
+        """
+        if txt[0] == '\"' and txt[-1] == '\"':
+            txt = txt[1:-1]  # get rid of the dobule quotes
+
+        if txt.isdigit():
+            return int(txt)
+        else:
+            try:
+                txt = float(txt)
+                return txt
+            except ValueError:
+                # also replace underscores with spaces
+                txt = txt.replace("_", " ").replace('"', '\"')
+                return txt
+
     def preloop(self):
         """Prints if isatty is false"""
         if not sys.__stdin__.isatty():
@@ -73,7 +98,7 @@ class HBNBCommand(cmd.Cmd):
                 pline = pline[2].strip()  # pline is now str
                 if pline:
                     # check for *args or **kwargs
-                    if pline[0] is '{' and pline[-1] is '}'\
+                    if pline[0] == '{' and pline[-1] == '}'\
                             and type(eval(pline)) is dict:
                         _args = pline
                     else:
@@ -114,50 +139,52 @@ class HBNBCommand(cmd.Cmd):
         pass
 
     def do_create(self, args):
-        """ Create an object of any class"""
-        try:
-            """Check if the args is empty"""
-            if not args:
-                raise SyntaxError()
+        """
+        Create an object of any class
 
-            """Split the arguments into a list"""
-            arg_list = args.split(" ")
+        """
+        # Split the arguments into a list
+        arg_list = args.split(" ")
 
-            """Create an empty dictionary to store the keyword arguments"""
-            kw = {}
-
-            """Process each argument in the list starting from the second one"""
-            for arg in arg_list[1:]:
-                """Split each argument into a key-value pair"""
-                arg_splited = arg_split("=")
-
-                """Evaluate the value part of the key-value pair"""
-                arg_splited[1] = eval(arg_splited[1])
-
-                """If the value is a string,replace underscore and handle quote"""
-                if type(arg_splited[1]) is str:
-                    arg_splited[1] = arg_splited[1].replace("_", " ")\
-                            .replace('"', '\\')
-
-                """Add the key-value pair to the dictionary"""
-                kw[arg_splited[0]] = arg_splited[1]
-
-        except SyntaxError:
-            """Handle case where class is missing"""
+        # Check if the args is empty
+        if arg_list[0] == "":
+            # Handle case where class is missing
             print("** class name missing **")
 
-        except NameError:
-            """Handle the case where claass doesn't exist"""
-            print("** class doesn't exist **")
+        elif arg_list[0] not in HBNBCommand.classes:
+            # Handle the case where claass doesn't exist
+            print(f"** class doesn't exist **")
+        else:
 
-        """Create a new instance of the specified class with the provided"""
-        new_instance = HBNBCommand.classes[arg_list[0]](**kw)
+            try:
+                # Create an empty dictionary to store the keyword arguments
+                kw = {}
 
-        """Save the new instance"""
-        new_instance.save()
+                # Process each argument in the list starting from the second one
+                for arg in arg_list[1:]:
+                    # Split each argument into a key-value pair"""
+                    arg_splited = arg.split("=")
 
-        """Print the ID of the new_instance"""
-        print(new_instance.id)
+                    # Evaluate the value part of the key-value pair
+                    arg_splited[1] = HBNBCommand.convector(arg_splited[1])
+
+                    # Add the key-value pair to the dictionary
+                    kw[arg_splited[0]] = arg_splited[1]
+
+                # Create a new instance of the specified class with the provided
+                new_instance = HBNBCommand.classes[arg_list[0]]()
+
+                # updating dict of new instance to store the new attributes
+                new_instance.__dict__.update(**kw)
+
+                # Save the new instance
+                new_instance.save()
+
+                # Print the ID of the new_instance
+                print(new_instance.id)
+
+            except Exception:
+                pass
 
     def help_create(self):
         """ Help information for the create method """
@@ -305,7 +332,7 @@ class HBNBCommand(cmd.Cmd):
                 args.append(v)
         else:  # isolate args
             args = args[2]
-            if args and args[0] is '\"':  # check for quoted arg
+            if args and args[0] == '\"':  # check for quoted arg
                 second_quote = args.find('\"', 1)
                 att_name = args[1:second_quote]
                 args = args[second_quote + 1:]
@@ -313,10 +340,10 @@ class HBNBCommand(cmd.Cmd):
             args = args.partition(' ')
 
             # if att_name was not quoted arg
-            if not att_name and args[0] is not ' ':
+            if not att_name and args[0] != ' ':
                 att_name = args[0]
             # check for quoted val arg
-            if args[2] and args[2][0] is '\"':
+            if args[2] and args[2][0] == '\"':
                 att_val = args[2][1:args[2].find('\"', 1)]
 
             # if att_val was not quoted arg
