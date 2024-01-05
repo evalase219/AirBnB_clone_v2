@@ -17,7 +17,7 @@ class FileStorage:
     def all(self, cls=None):
         """Returns the list of objects of one type of class"""
         if cls is None:
-            return list(self.__objects.values())
+            return self.__objects
         else:
             return [obj for obj in self.__objects.values()
                     if isinstance(obj, cls)]
